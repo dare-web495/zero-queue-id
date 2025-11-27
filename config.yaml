@@ -1,0 +1,9 @@
+business_name: "Zero Queue System"
+service_name: "Appointment Booking"
+icon: "🆔"
+tagline: "No more waiting in line – book your exact time slot"
+slots_per_day: 240
+slot_duration_minutes: 10
+working_hours_start: 8
+working_hours_end: 16
+primary_color: "indigo"

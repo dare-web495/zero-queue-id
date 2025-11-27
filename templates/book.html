@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html class="h-full bg-gray-50">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Book • {{ config.business_name }}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gray-50 py-12 px-4">
+  <div class="max-w-lg mx-auto">
+    <div class="bg-white rounded-2xl shadow-xl p-8">
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">Book {{ config.service_name }}</h1>
+        <p class="text-gray-600 mt-2">{{ config.tagline }}</p>
+      </div>
+
+      <form action="/book" method="post" class="space-y-6">
+        <input type="text" name="full_name" placeholder="Full Name" required 
+               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-{{ config.primary_color }}-500">
+        
+        <input type="tel" name="phone" placeholder="Phone" required 
+               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-{{ config.primary_color }}-500">
+        
+        <input type="email" name="email" placeholder="Email" required 
+               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-{{ config.primary_color }}-500">
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
+          <select name="appointment_date" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-{{ config.primary_color }}-500">
+            {% for d in dates %}
+              <option value="{{ d }}">{{ d }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <button type="submit" class="w-full bg-{{ config.primary_color }}-600 hover:bg-{{ config.primary_color }}-700 text-white font-bold py-4 rounded-lg text-lg transition">
+          Confirm → Get Exact Time
+        </button>
+      </form>
+
+      <p class="text-center text-sm text-gray-500 mt-8">
+        Instant confirmation • No queues<br>
+        <a href="/" class="text-{{ config.primary_color }}-600 hover:underline">← Back</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>

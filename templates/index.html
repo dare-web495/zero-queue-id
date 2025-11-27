@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html class="h-full bg-gray-50">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ config.business_name }} • {{ config.service_name }}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { theme: { extend: { colors: { primary: '{{ config.primary_color }}' } } } }</script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="h-full flex items-center justify-center">
+  <div class="max-w-md w-full bg-white rounded-2xl shadow-xl p-10 text-center">
+    <div class="text-7xl mb-6">{{ config.icon }}</div>
+    <h1 class="text-4xl font-bold text-gray-800 mb-3">{{ config.business_name }}</h1>
+    <p class="text-gray-600 mb-8">{{ config.tagline }}</p>
+    <a href="/book" class="inline-block bg-{{ config.primary_color }}-600 hover:bg-{{ config.primary_color }}-700 text-white font-bold py-4 px-10 rounded-full text-lg transition">
+      Book Now
+    </a>
+    <p class="mt-8 text-sm text-gray-500">{{ config.slots_per_day }} slots daily • {{ config.slot_duration_minutes }}-minute service • Zero waiting</p>
+  </div>
+</body>
+</html>
