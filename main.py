@@ -15,6 +15,9 @@ import logging
 
 load_dotenv()  # Load env vars
 
+import logging
+logging.basicConfig(level=logging.INFO)
+
 # Fallback env vars
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./id_queue.db")  # Default if missing
 SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
@@ -86,10 +89,11 @@ def on_startup():
     try:
         create_db_and_tables()
         today = date.today()
-        for i in range(7):  # Limit to 7 days to avoid startup timeout
+        for i in range(30):
             generate_slots_for_date(today + timedelta(days=i))
     except Exception as e:
         logging.error(f"Startup failed: {e}")
+        
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
