@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Complete Payment</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-lg p-8 max-w-md w-full">
+    <h1 class="text-3xl font-bold text-indigo-600 mb-6">Complete Payment</h1>
+    <p class="mb-6">Pay KES 500 to secure your slot</p>
+    <div id="card-element" class="p-4 border rounded-lg mb-6"></div>
+    <button id="submit" class="w-full bg-indigo-600 text-white py-4 rounded-lg font-bold">Pay KES 500</button>
+    <p id="result" class="mt-4 text-center font-bold"></p>
+  </div>
+
+  <script>
+    const stripe = Stripe("pk_live_51Q3v..."); // ← CHANGE TO YOUR PUBLISHABLE KEY
+    const elements = stripe.elements();
+    const card = elements.create("card");
+    card.mount("#card-element");
+
+    document.getElementById("submit").addEventListener("click", async () => {
+      const {paymentIntent, error} = await stripe.createPaymentMethod({
+        type: "card",
+        card: card,
+      }).then(pm => stripe.createPaymentIntent({
+        amount: 50000, // KES 500.00 (in cents)
+        currency: "kes",
+        payment_method: pm.paymentMethod.id,
+      }));
+
+      if (error) {
+        document.getElementById("result").textContent = error.message;
+      } else {
+        document.getElementById("result").textContent = "Payment successful! Redirecting...";
+        window.location.href = "/booking-confirmed?pi=" + paymentIntent.id;
+      }
+    });
+  </script>
+</body>
+</html>
