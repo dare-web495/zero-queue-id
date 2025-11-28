@@ -10,6 +10,8 @@ import os
 import yaml
 from dotenv import load_dotenv
 import logging
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 load_dotenv()  # Load env vars
 
@@ -69,6 +71,17 @@ if TWILIO_SID and TWILIO_TOKEN and TWILIO_FROM:
         twilio_client = Client(TWILIO_SID, TWILIO_TOKEN)
     except Exception as e:
         logging.error(f"Twilio setup failed: {e}")
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(status_code=400, content={"detail": "Invalid input – check form data"})
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request: Request, exc: Exception):
+    logging.error(f"500 error: {exc}")
+    return JSONResponse(status_code=500, content={"detail": "Internal server error – try again"})
+
 
 @app.on_event("startup")
 def on_startup():
