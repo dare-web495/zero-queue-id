@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlmodel import Session, select
+from typing import Generator
 from datetime import date, timedelta
 from database import get_session, create_db_and_tables
 from models import Applicant, DailySlot
@@ -13,7 +14,7 @@ import logging
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-load_dotenv()  # Load env vars
+load_dotenv() # Load env vars
 
 # Fallback env vars
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./id_queue.db")  # Default if missing
