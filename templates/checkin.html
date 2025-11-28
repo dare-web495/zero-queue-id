@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>QR Check-In</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
+    <h1 class="text-3xl font-bold mb-6">QR Check-In</h1>
+    <div id="reader" class="mx-auto mb-6"></div>
+    <div id="result" class="text-xl font-bold text-green-600"></div>
+  </div>
+
+  <script>
+    const scanner = new Html5QrcodeScanner('reader', { fps: 10, qrbox: 250 });
+    scanner.render(onScanSuccess, onScanError);
+
+    function onScanSuccess(decodedText) {
+      fetch("/checkin", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "ref=" + encodeURIComponent(decodedText)
+      })
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById("result").innerHTML = 
+          `<p class="text-green-600">✓ ${data.message}</p>`;
+        scanner.clear();
+      });
+    }
+
+    function onScanError(err) {
+      // Ignore scan errors
+    }
+  </script>
+</body>
+</html>
