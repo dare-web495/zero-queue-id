@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin - {{ config.business_name }}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <meta http-equiv="refresh" content="30">
+</head>
+<body class="bg-gray-100 p-6">
+  <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8">
+    <h1 class="text-3xl font-bold text-indigo-600 mb-6">Admin Dashboard</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div class="bg-blue-100 p-6 rounded-lg">
+        <p class="text-4xl font-bold">{{ stats.today_booked }}</p>
+        <p>Booked Today</p>
+      </div>
+      <div class="bg-green-100 p-6 rounded-lg">
+        <p class="text-4xl font-bold">{{ stats.checked_in_today }}</p>
+        <p>Checked In</p>
+      </div>
+      <div class="bg-purple-100 p-6 rounded-lg">
+        <p class="text-4xl font-bold">{{ stats.show_up_rate }}%</p>
+        <p>Show-up Rate</p>
+      </div>
+    </div>
+
+    <div class="bg-gray-50 p-6 rounded-lg mb-6">
+      <h2 class="text-xl font-bold mb-4">Change Daily Capacity</h2>
+      <form action="/update-capacity" method="post" class="flex items-center gap-4">
+        <input type="range" name="capacity" min="100" max="500" value="{{ config.slots_per_day }}" class="w-64">
+        <span class="font-bold text-xl">{{ config.slots_per_day }} slots</span>
+        <button class="bg-indigo-600 text-white px-6 py-2 rounded">Update</button>
+      </form>
+    </div>
+
+    <h2 class="text-2xl font-bold mb-4">Today's Queue (Privacy Mode)</h2>
+    <table class="w-full border">
+      <thead class="bg-gray-200">
+        <tr>
+          <th class="p-3 text-left">Time</th>
+          <th class="p-3 text-left">Name (Last 3 letters)</th>
+          <th class="p-3 text-left">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in todays_bookings %}
+        <tr class="{% if b.checked_in %}bg-green-50{% else %}bg-yellow-50{% endif %}">
+          <td class="p-3">{{ b.appointment_time }}</td>
+          <td class="p-3">{{ b.full_name[-3:] }}***</td>
+          <td class="p-3 font-bold">
+            {% if b.checked_in %}Checked In{% else %}Waiting{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>
