@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.exceptions import RequestValidationError
 from sqlmodel import Session, select
 from typing import Generator
 from datetime import date, timedelta
@@ -11,10 +12,8 @@ import os
 import yaml
 from dotenv import load_dotenv
 import logging
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
 
-load_dotenv() # Load env vars
+load_dotenv()  # Load env vars
 
 # Fallback env vars
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./id_queue.db")  # Default if missing
@@ -73,7 +72,6 @@ if TWILIO_SID and TWILIO_TOKEN and TWILIO_FROM:
     except Exception as e:
         logging.error(f"Twilio setup failed: {e}")
 
-
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     return JSONResponse(status_code=400, content={"detail": "Invalid input – check form data"})
@@ -83,23 +81,26 @@ async def general_exception_handler(request: Request, exc: Exception):
     logging.error(f"500 error: {exc}")
     return JSONResponse(status_code=500, content={"detail": "Internal server error – try again"})
 
-
 @app.on_event("startup")
 def on_startup():
     try:
         create_db_and_tables()
         today = date.today()
-        for i in range(30):
+        for i in range(7):  # Limit to 7 days to avoid startup timeout
             generate_slots_for_date(today + timedelta(days=i))
     except Exception as e:
         logging.error(f"Startup failed: {e}")
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
+    if templates is None:
+        return HTMLResponse("<h1>Zero Queue System</h1><a href='/book'>Book Now</a>")
     return templates.TemplateResponse("index.html", {"request": request, "config": config})
 
 @app.get("/book", response_class=HTMLResponse)
 async def book_form(request: Request, session: Session = Depends(get_session)):
+    if templates is None:
+        return HTMLResponse("<h1>Book Form</h1><form action='/book' method='post'>Full Name: <input name='full_name'><br>Phone: <input name='phone'><br>Email: <input name='email'><br>Date: <input name='appointment_date' type='date'><br><button>Confirm</button></form>")
     today = date.today()
     dates = [(today + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(1, 31)]
     return templates.TemplateResponse("book.html", {"request": request, "dates": dates, "config": config})
@@ -115,20 +116,16 @@ async def book_slot(
     try:
         target_date = date.fromisoformat(appointment_date)
         generate_slots_for_date(target_date)
-
         slots = session.exec(
             select(DailySlot)
             .where(DailySlot.date == target_date)
             .where(DailySlot.booked < DailySlot.capacity)
             .order_by(DailySlot.id)
         ).all()
-
         if not slots:
             raise HTTPException(400, "No slots available on this date. Try another day.")
-
         chosen_slot = slots[0]
         chosen_slot.booked += 1
-
         applicant = Applicant(
             full_name=full_name,
             phone=phone,
@@ -142,15 +139,12 @@ async def book_slot(
         session.add(chosen_slot)
         session.commit()
         session.refresh(applicant)
-
         message = f"Hello {full_name}! Your National ID appointment is confirmed for {target_date} at {chosen_slot.time}. Arrive 5 mins early. Ref: {applicant.id}"
-
         if twilio_client:
             try:
                 twilio_client.messages.create(body=message, from_=TWILIO_FROM, to=phone)
             except Exception as e:
                 logging.error(f"SMS failed: {e}")
-
         if sendgrid_client:
             try:
                 email_message = Mail(
@@ -162,15 +156,15 @@ async def book_slot(
                 sendgrid_client.send(email_message)
             except Exception as e:
                 logging.error(f"Email failed: {e}")
-
         return RedirectResponse("/success", status_code=303)
-
     except Exception as e:
         logging.error(f"Booking failed: {e}")
         raise HTTPException(500, "Something went wrong. Try again.")
 
 @app.get("/success", response_class=HTMLResponse)
 async def success(request: Request):
+    if templates is None:
+        return HTMLResponse("<h1>Booking Confirmed! 🎉</h1><p>Check your email.</p><a href='/'>Book Another</a>")
     return templates.TemplateResponse("success.html", {"request": request, "config": config})
 
 @app.get("/admin")
