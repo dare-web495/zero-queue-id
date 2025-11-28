@@ -150,14 +150,18 @@ async def book_slot(
             except Exception as e:
                 logging.error(f"Email failed: {e}")
 
-        return RedirectResponse("/success", status_code=303)
+        return RedirectResponse(f"/success?ref={applicant.id}", status_code=303)
     except Exception as e:
         logging.error(f"Booking failed: {e}")
         raise HTTPException(500, "Try again")
 
 @app.get("/success", response_class=HTMLResponse)
-async def success(request: Request):
-    return templates.TemplateResponse("success.html", {"request": request, "config": config})
+async def success(request: Request, ref: int = None, session: Session = Depends(get_session)):
+    if ref:
+        applicant = session.exec(select(Applicant).where(Applicant.id == ref)).first()
+    else:
+        applicant = None
+    return templates.TemplateResponse("success.html", {"request": request, "config": config, "applicant": applicant})
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
