@@ -1,6 +1,5 @@
-from sqlmodel import SQLModel, create 
-
-_engine, Session
+from sqlmodel import SQLModel, Session
+from sqlalchemy import create_engine
 from typing import Generator
 import os
 from dotenv import load_dotenv
