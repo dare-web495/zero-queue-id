@@ -14,10 +14,12 @@
       Check your email (including Spam/Promotions)<br>
       <strong>Drag this email to your Inbox</strong> so future ones arrive there!
     </p>
-    <div class="mt-8">
-      <p class="text-lg font-bold mb-4">Show this QR code at check-in:</p>
-      <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ applicant.id }}" alt="QR Code">
-    </div>
+   <div class="mt-10 text-center">
+      <p class="text-xl font-bold mb-4">Show this QR code at check-in:</p>
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={{ applicant.id }}" 
+           alt="Your QR Code" class="mx-auto border-4 border-indigo-600 rounded-lg">
+      <p class="mt-4 text-lg font-mono bg-gray-100 px-6 py-3 rounded">Your Reference: {{ applicant.id }}</p>
+  </div>
     <a href="/" class="bg-{{ config.primary_color }}-600 hover:bg-{{ config.primary_color }}-700 text-white font-bold py-4 px-10 rounded-full text-lg transition">
       Book Another Slot
     </a>
