@@ -8,20 +8,50 @@ from models import Applicant, DailySlot
 from scheduler import generate_slots_for_date
 import os
 import yaml
-from dotenv import load_dotenv   
+from dotenv import load_dotenv
+import logging
 
-load_dotenv()  # this loads your .env file
+load_dotenv()  # Load env vars
 
-# Load config.yaml
-with open("config.yaml", "r") as f:
-    config = yaml.safe_load(f)
-
-app = FastAPI(title=f"{config['business_name']} • {config['service_name']}")
-templates = Jinja2Templates(directory="templates")
-
-# === SendGrid Email ===
+# Fallback env vars
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./id_queue.db")  # Default if missing
 SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
 FROM_EMAIL = os.getenv("FROM_EMAIL", "bookings@zeroqueue.app")
+TWILIO_SID = os.getenv("TWILIO_SID")
+TWILIO_TOKEN = os.getenv("TWILIO_TOKEN")
+TWILIO_FROM = os.getenv("TWILIO_FROM")
+
+# Logging to catch startup errors
+logging.basicConfig(level=logging.INFO)
+
+# Load config with fallback
+try:
+    with open("config.yaml", "r") as f:
+        config = yaml.safe_load(f)
+except Exception as e:
+    logging.error(f"Config load failed: {e}")
+    config = {
+        'business_name': "Zero Queue System",
+        'service_name': "Appointment Booking",
+        'icon': "🆔",
+        'tagline': "No more waiting in line – book your exact time slot",
+        'slots_per_day': 240,
+        'slot_duration_minutes': 10,
+        'working_hours_start': 8,
+        'working_hours_end': 16,
+        'primary_color': "indigo"
+    }  # Default config if file missing
+
+app = FastAPI(title=f"{config['business_name']} • {config['service_name']}")
+
+# Templates with fallback
+try:
+    templates = Jinja2Templates(directory="templates")
+except Exception as e:
+    logging.error(f"Templates load failed: {e}")
+    templates = None  # Fallback, but app will crash on render – fix folder
+
+# Lazy SendGrid import (only if key present)
 sendgrid_client = None
 if SENDGRID_API_KEY:
     try:
@@ -29,31 +59,26 @@ if SENDGRID_API_KEY:
         from sendgrid.helpers.mail import Mail
         sendgrid_client = sendgrid.SendGridAPIClient(SENDGRID_API_KEY)
     except Exception as e:
-        print("SendGrid import failed:", e)
+        logging.error(f"SendGrid setup failed: {e}")
 
-# === Twilio SMS (optional) ===
-TWILIO_SID = os.getenv("TWILIO_SID")
-TWILIO_TOKEN = os.getenv("TWILIO_TOKEN")
-TWILIO_FROM = os.getenv("TWILIO_FROM")
+# Lazy Twilio import (only if keys present)
 twilio_client = None
 if TWILIO_SID and TWILIO_TOKEN and TWILIO_FROM:
     try:
         from twilio.rest import Client
         twilio_client = Client(TWILIO_SID, TWILIO_TOKEN)
-    except:
-        pass
+    except Exception as e:
+        logging.error(f"Twilio setup failed: {e}")
 
 @app.on_event("startup")
 def on_startup():
-    create_db_and_tables()
-    today = date.today()
-    for i in range(30):
-        generate_slots_for_date(today + timedelta(days=i))
-
-
-@app.get("/health")
-async def health():
-    return {"status": "healthy"}
+    try:
+        create_db_and_tables()
+        today = date.today()
+        for i in range(30):
+            generate_slots_for_date(today + timedelta(days=i))
+    except Exception as e:
+        logging.error(f"Startup failed: {e}")
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
@@ -66,57 +91,42 @@ async def book_form(request: Request, session: Session = Depends(get_session)):
     return templates.TemplateResponse("book.html", {"request": request, "dates": dates, "config": config})
 
 @app.post("/book")
-async def book_slot(full_name: str = Form(...), phone: str = Form(...), email: str = Form(...), appointment_date: str = Form(...), session: Session = Depends(get_session)):
-    target_date = date.fromisoformat(appointment_date)
-    generate_slots_for_date(target_date)
+async def book_slot(
+    full_name: str = Form(...),
+    phone: str = Form(...),
+    email: str = Form(...),
+    appointment_date: str = Form(...),
+    session: Session = Depends(get_session)
+):
+    try:
+        target_date = date.fromisoformat(appointment_date)
+        generate_slots_for_date(target_date)
 
-    slots = session.exec(select(DailySlot).where(DailySlot.date == target_date, DailySlot.booked < DailySlot.capacity).order_by(DailySlot.id)).all()
-    if not slots:
-        raise HTTPException(400, "No slots available on this date.")
+        slots = session.exec(
+            select(DailySlot)
+            .where(DailySlot.date == target_date)
+            .where(DailySlot.booked < DailySlot.capacity)
+            .order_by(DailySlot.id)
+        ).all()
 
-    chosen_slot = slots[0]
-    chosen_slot.booked += 1
+        if not slots:
+            raise HTTPException(400, "No slots available on this date. Try another day.")
 
-    applicant = Applicant(full_name=full_name, phone=phone, email=email, appointment_date=target_date,
-                          appointment_time=chosen_slot.time, slot_id=chosen_slot.id, confirmed=True)
-    session.add(applicant)
-    session.add(chosen_slot)
-    session.commit()
-    session.refresh(applicant)
+        chosen_slot = slots[0]
+        chosen_slot.booked += 1
 
-    msg = f"Hello {full_name}! Your {config['service_name']} is confirmed for {target_date} at {chosen_slot.time}. Ref: {applicant.id}"
+        applicant = Applicant(
+            full_name=full_name,
+            phone=phone,
+            email=email,
+            appointment_date=target_date,
+            appointment_time=chosen_slot.time,
+            slot_id=chosen_slot.id,
+            confirmed=True
+        )
+        session.add(applicant)
+        session.add(chosen_slot)
+        session.commit()
+        session.refresh(applicant)
 
-    # SMS
-    if twilio_client:
-        try:
-            twilio_client.messages.create(body=msg, from_=TWILIO_FROM, to=phone)
-            print(f"SMS sent to {phone}")
-        except:
-            print("SMS failed")
-
-    # Email
-    if sendgrid_client:
-        try:
-            message = Mail(from_email=FROM_EMAIL, to_emails=email,
-                           subject=f"Confirmed: {config['service_name']}",
-                           html_content=f"<h3>Hi {full_name}!</h3><p>Your booking is confirmed:</p><ul><li>Date: {target_date}</li><li>Time: {chosen_slot.time}</li><li>Ref: {applicant.id}</li></ul><p>See you soon!</p>")
-            sendgrid_client.send(message)
-            print(f"Email sent to {email}")
-        except Exception as e:
-            print("Email failed:", e)
-    else:
-        print("Email skipped (no SendGrid)")
-
-    return RedirectResponse("/success", status_code=303)
-
-@app.get("/success", response_class=HTMLResponse)
-async def success(request: Request):
-    return templates.TemplateResponse("success.html", {"request": request, "config": config})
-
-@app.get("/admin")
-async def admin(session: Session = Depends(get_session)):
-    today = date.today()
-    return {
-        "today_booked": session.exec(select(Applicant).where(Applicant.appointment_date == today)).count(),
-        "total_upcoming": session.exec(select(Applicant).where(Applicant.appointment_date >= today)).count(),
-    }
+        message = f"Hello {full_name}! Your National ID appointment is confirmed for {
