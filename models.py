@@ -1,12 +1,14 @@
 from sqlmodel import SQLModel, Field
 from typing import Optional
 from datetime import datetime
-from datetime import date as DateType
+from dateutil import parser  # we no longer import date directly
+from typing import Annotated
+from datetime import date as DateType  # rename to avoid clash
 
 class Applicant(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     full_name: str
-    phone: str = Field(index=True)  # ← removed unique=True
+    phone: str = Field(index=True, unique=True)
     email: str
     appointment_date: DateType
     appointment_time: str
