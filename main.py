@@ -129,4 +129,41 @@ async def book_slot(
         session.commit()
         session.refresh(applicant)
 
-        message = f"Hello {full_name}! Your National ID appointment is confirmed for {
+        message = f"Hello {full_name}! Your National ID appointment is confirmed for {target_date} at {chosen_slot.time}. Arrive 5 mins early. Ref: {applicant.id}"
+
+        if twilio_client:
+            try:
+                twilio_client.messages.create(body=message, from_=TWILIO_FROM, to=phone)
+            except Exception as e:
+                logging.error(f"SMS failed: {e}")
+
+        if sendgrid_client:
+            try:
+                email_message = Mail(
+                    from_email=FROM_EMAIL,
+                    to_emails=email,
+                    subject="Your National ID Appointment is Confirmed",
+                    html_content=f"<strong>{message}</strong>"
+                )
+                sendgrid_client.send(email_message)
+            except Exception as e:
+                logging.error(f"Email failed: {e}")
+
+        return RedirectResponse("/success", status_code=303)
+
+    except Exception as e:
+        logging.error(f"Booking failed: {e}")
+        raise HTTPException(500, "Something went wrong. Try again.")
+
+@app.get("/success", response_class=HTMLResponse)
+async def success(request: Request):
+    return templates.TemplateResponse("success.html", {"request": request, "config": config})
+
+@app.get("/admin")
+async def admin_dashboard(session: Session = Depends(get_session)):
+    today = date.today()
+    stats = {
+        "today_booked": session.exec(select(Applicant).where(Applicant.appointment_date == today)).count(),
+        "total_upcoming": session.exec(select(Applicant).where(Applicant.appointment_date >= today)).count(),
+    }
+    return stats
