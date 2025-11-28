@@ -194,3 +194,19 @@ async def update_capacity(capacity: int = Form(...), _: bool = Depends(verify_ad
     with open("config.yaml", "w") as f:
         yaml.dump(config, f)
     return RedirectResponse("/admin", status_code=303)
+
+@app.get("/checkin", response_class=HTMLResponse)
+async def checkin_page(request: Request):
+    return templates.TemplateResponse("checkin.html", {"request": request})
+
+@app.post("/checkin")
+async def checkin(ref: str = Form(...), session: Session = Depends(get_session)):
+    applicant = session.exec(select(Applicant).where(Applicant.id == int(ref))).first()
+    if not applicant:
+        raise HTTPException(404, "Invalid QR code")
+    if applicant.checked_in:
+        return {"message": f"{applicant.full_name} already checked in!"}
+    applicant.checked_in = True
+    session.add(applicant)
+    session.commit()
+    return {"message": f"Welcome {applicant.full_name}! Checked in at {applicant.appointment_time}"}
