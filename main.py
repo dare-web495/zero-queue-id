@@ -4,6 +4,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.exceptions import RequestValidationError
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from sqlmodel import Session, select
+from sqlalchemy import text
 from typing import Generator
 from datetime import date, timedelta
 from database import get_session, create_db_and_tables
@@ -31,15 +32,15 @@ try:
 except Exception as e:
     logging.error(f"Config load failed: {e}")
     config = {
-        business_name: "Zero Queue Restaurant"
-        service_name: "Table Reservation"
-        icon: "🍽️"
-        tagline: "Reserve your table — no more waiting"
-        slots_per_day: 120
-        slot_duration_minutes: 90
-        working_hours_start: 11
-        working_hours_end: 22
-        primary_color: "amber"
+        "business_name": "Zero Queue Restaurant",
+        "service_name": "Table Reservation",
+        "icon": "🍽️",
+        "tagline": "Reserve your table — no more waiting",
+        "slots_per_day": 120,
+        "slot_duration_minutes": 90,
+        "working_hours_start": 11,
+        "working_hours_end": 22,
+        "primary_color": "amber"
     }
 
 app = FastAPI(title=f"{config['business_name']} • {config['service_name']}")
@@ -60,7 +61,7 @@ if SENDGRID_API_KEY:
     except Exception as e:
         logging.error(f"SendGrid failed: {e}")
 
-# Admin Login (change anytime)
+# Admin Login
 ADMIN_USER = "admin"
 ADMIN_PASS = "zeroqueue2025"
 security = HTTPBasic()
@@ -136,7 +137,6 @@ async def book_slot(
         session.add(chosen_slot)
         session.commit()
         session.refresh(applicant)
-
         # Email
         if sendgrid_client:
             try:
@@ -149,7 +149,6 @@ async def book_slot(
                 sendgrid_client.send(msg)
             except Exception as e:
                 logging.error(f"Email failed: {e}")
-
         return RedirectResponse(f"/success?ref={applicant.id}", status_code=303)
     except Exception as e:
         logging.error(f"Booking failed: {e}")
@@ -157,10 +156,9 @@ async def book_slot(
 
 @app.get("/success", response_class=HTMLResponse)
 async def success(request: Request, ref: int = None, session: Session = Depends(get_session)):
+    applicant = None
     if ref:
         applicant = session.exec(select(Applicant).where(Applicant.id == ref)).first()
-    else:
-        applicant = None
     return templates.TemplateResponse("success.html", {"request": request, "config": config, "applicant": applicant})
 
 @app.get("/login", response_class=HTMLResponse)
@@ -178,13 +176,11 @@ async def admin_dashboard(request: Request, _: bool = Depends(verify_admin), ses
     todays_bookings = session.exec(
         select(Applicant).where(Applicant.appointment_date == today).order_by(Applicant.appointment_time)
     ).all()
-
     stats = {
         "today_booked": len(todays_bookings),
         "checked_in_today": len([b for b in todays_bookings if b.checked_in]),
         "show_up_rate": round((len([b for b in todays_bookings if b.checked_in]) / len(todays_bookings) * 100) if todays_bookings else 0),
     }
-
     return templates.TemplateResponse("admin.html", {
         "request": request,
         "config": config,
