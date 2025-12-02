@@ -31,15 +31,15 @@ try:
 except Exception as e:
     logging.error(f"Config load failed: {e}")
     config = {
-        "business_name": "Zero Queue System",
-        "service_name": "Appointment Booking",
-        "icon": "🆔",
-        "tagline": "No more waiting in line – book your exact time slot",
-        "slots_per_day": 240,
-        "slot_duration_minutes": 10,
-        "working_hours_start": 8,
-        "working_hours_end": 16,
-        "primary_color": "indigo"
+        business_name: "Zero Queue Restaurant"
+        service_name: "Table Reservation"
+        icon: "🍽️"
+        tagline: "Reserve your table — no more waiting"
+        slots_per_day: 120
+        slot_duration_minutes: 90
+        working_hours_start: 11
+        working_hours_end: 22
+        primary_color: "amber"
     }
 
 app = FastAPI(title=f"{config['business_name']} • {config['service_name']}")
