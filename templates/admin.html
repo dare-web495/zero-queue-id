@@ -5,24 +5,23 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <meta http-equiv="refresh" content="30">
 </head>
-<body class="bg-amber-50 min-h-screen p-6 relative overflow-hidden">
-  <!-- Animated background -->
+<body class="bg-gray-100 min-h-screen p-6 relative overflow-hidden">
   <div class="fixed inset-0 -z-10 overflow-hidden">
     <div class="restaurant-bg"></div>
   </div>
 
-  <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-2xl p-8">
+  <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-lg p-8">
     <div class="flex justify-between items-center mb-8">
-      <h1 class="text-3xl font-bold text-amber-800">Admin Dashboard</h1>
-      <div class="flex gap-4">
-        <a href="/logout" class="text-red-600 hover:text-red-800 hover:underline">Logout</a>
+      <h1 class="text-3xl font-bold text-amber-800">{{ config.business_name }} - Admin Dashboard</h1>
+      <div class="flex gap-4 items-center">
+        <a href="/logout" class="text-red-500 hover:text-red-600 font-extrabold text-lg hover:underline transition">Logout</a>
         <form action="/reset-db" method="post" onsubmit="return confirm('Reset ALL data? This cannot be undone!')">
-          <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">Reset Database</button>
+          <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition">Reset Database</button>
         </form>
       </div>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
       <div class="bg-blue-100 p-6 rounded-lg shadow-md hover:shadow-lg transition">
         <p class="text-4xl font-bold text-blue-800">{{ stats.today_booked }}</p>
         <p class="text-gray-700">Booked Today</p>
