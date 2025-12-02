@@ -214,3 +214,10 @@ async def checkin(ref: str = Form(...), session: Session = Depends(get_session))
     session.add(applicant)
     session.commit()
     return {"message": f"Welcome {applicant.full_name}! Checked in at {applicant.appointment_time}"}
+
+@app.get("/reset-db")
+async def reset_db(session: Session = Depends(get_session)):
+    session.exec(text("DELETE FROM applicant"))
+    session.exec(text("DELETE FROM daily_slot"))
+    session.commit()
+    return {"status": "Database cleared!"}
