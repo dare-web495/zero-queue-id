@@ -7,6 +7,22 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
+  <style>
+    .restaurant-bg {
+      position: fixed;
+      inset: 0;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><circle cx="30" cy="30" r="8" fill="%23f59e0b"/><circle cx="90" cy="80" r="6" fill="%23ef4444"/><circle cx="60" cy="50" r="5" fill="%239ca3af"/></svg>') repeat;
+      opacity: 0.15;
+      animation: float 25s infinite linear;
+      pointer-events: none;
+      z-index: -1;
+    }
+    @keyframes float {
+      0% { transform: translateY(0) translateX(0); }
+      100% { transform: translateY(-100vh) translateX(100px); }
+    }
+  </style>
+  <div class="restaurant-bg"></div>
   <div class="max-w-md w-full bg-white rounded-2xl shadow-xl p-10 text-center">
     <div class="text-8xl mb-6">✅</div>
     <h1 class="text-4xl font-bold text-green-600 mb-4">Booking Confirmed!</h1>
