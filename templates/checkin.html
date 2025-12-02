@@ -7,22 +7,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
-  <style>
-  .restaurant-bg {
-    position: fixed;
-    inset: 0;
-    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><circle cx="30" cy="30" r="8" fill="%23f59e0b"/><circle cx="90" cy="80" r="6" fill="%23ef4444"/><circle cx="60" cy="50" r="5" fill="%239ca3af"/></svg>') repeat;
-    opacity: 0.15;
-    animation: float 25s infinite linear;
-    pointer-events: none;
-    z-index: -1;
-  }
-  @keyframes float {
-    0% { transform: translateY(0) translateX(0); }
-    100% { transform: translateY(-100vh) translateX(100px); }
-  }
-</style>
-<div class="restaurant-bg"></div>
   <div class="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
     <h1 class="text-3xl font-bold mb-6">QR Check-In</h1>
     <div id="reader" class="mx-auto mb-6"></div>
