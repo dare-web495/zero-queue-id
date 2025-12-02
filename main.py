@@ -218,3 +218,14 @@ async def reset_db(session: Session = Depends(get_session)):
     session.exec(text("DELETE FROM daily_slot"))
     session.commit()
     return {"status": "Database cleared!"}
+
+@app.get("/logout")
+async def logout():
+    raise HTTPException(status_code=401, detail="Logged out", headers={"WWW-Authenticate": "Basic"})
+
+@app.post("/reset-db")
+async def reset_db(_: bool = Depends(verify_admin), session: Session = Depends(get_session)):
+    session.exec(text("DELETE FROM applicant"))
+    session.exec(text("DELETE FROM daily_slot"))
+    session.commit()
+    return RedirectResponse("/admin", status_code=303)
