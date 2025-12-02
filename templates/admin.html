@@ -5,51 +5,63 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <meta http-equiv="refresh" content="30">
 </head>
-<body class="bg-gray-100 min-h-screen p-6">
-  <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-lg p-8">
+<body class="bg-amber-50 min-h-screen p-6 relative overflow-hidden">
+  <!-- Animated background -->
+  <div class="fixed inset-0 -z-10 overflow-hidden">
+    <div class="restaurant-bg"></div>
+  </div>
+
+  <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-2xl p-8">
     <div class="flex justify-between items-center mb-8">
-      <h1 class="text-3xl font-bold text-indigo-600">{{ config.business_name }} - Admin</h1>
-      <div>
-        <a href="/logout" class="text-red-600 hover:underline mr-6">Logout</a>
+      <h1 class="text-3xl font-bold text-amber-800">Admin Dashboard</h1>
+      <div class="flex gap-4">
+        <a href="/logout" class="text-red-600 hover:text-red-800 hover:underline">Logout</a>
         <form action="/reset-db" method="post" onsubmit="return confirm('Reset ALL data? This cannot be undone!')">
-          <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Reset Database</button>
+          <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">Reset Database</button>
         </form>
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-      <div class="bg-blue-100 p-6 rounded-lg">
-        <p class="text-4xl font-bold">{{ stats.total_booked }}</p>
-        <p>Total Bookings (All Time)</p>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+      <div class="bg-blue-100 p-6 rounded-lg shadow-md hover:shadow-lg transition">
+        <p class="text-4xl font-bold text-blue-800">{{ stats.today_booked }}</p>
+        <p class="text-gray-700">Booked Today</p>
       </div>
-      <div class="bg-green-100 p-6 rounded-lg">
-        <p class="text-4xl font-bold">{{ stats.today_booked }}</p>
-        <p>Today</p>
+      <div class="bg-green-100 p-6 rounded-lg shadow-md hover:shadow-lg transition">
+        <p class="text-4xl font-bold text-green-800">{{ stats.checked_in_today }}</p>
+        <p class="text-gray-700">Checked In</p>
       </div>
-      <div class="bg-purple-100 p-6 rounded-lg">
-        <p class="text-4xl font-bold">{{ stats.show_up_rate }}%</p>
-        <p>Show-up Rate (Today)</p>
+      <div class="bg-purple-100 p-6 rounded-lg shadow-md hover:shadow-lg transition">
+        <p class="text-4xl font-bold text-purple-800">{{ stats.show_up_rate }}%</p>
+        <p class="text-gray-700">Show-up Rate</p>
       </div>
     </div>
 
-    <h2 class="text-2xl font-bold mb-4">All Bookings</h2>
-    <div class="overflow-x-auto">
-      <table class="w-full border">
-        <thead class="bg-gray-200">
+    <div class="bg-amber-50 p-6 rounded-lg shadow-md mb-6">
+      <h2 class="text-xl font-bold text-amber-800 mb-4">Change Daily Capacity</h2>
+      <form action="/update-capacity" method="post" class="flex items-center gap-4">
+        <input type="range" name="capacity" min="100" max="500" value="{{ config.slots_per_day }}" class="w-full">
+        <span class="font-bold text-xl text-amber-800">{{ config.slots_per_day }}</span>
+        <button class="bg-amber-600 text-white px-6 py-2 rounded hover:bg-amber-700 transition">Update</button>
+      </form>
+    </div>
+
+    <h2 class="text-2xl font-bold text-amber-800 mb-4">Today's Bookings</h2>
+    <div class="overflow-x-auto rounded-lg shadow-md">
+      <table class="w-full border-collapse">
+        <thead class="bg-amber-100">
           <tr>
-            <th class="p-3 text-left">Date</th>
-            <th class="p-3 text-left">Time</th>
-            <th class="p-3 text-left">Name</th>
-            <th class="p-3 text-left">Status</th>
+            <th class="p-3 text-left text-amber-800">Time</th>
+            <th class="p-3 text-left text-amber-800">Name (Masked)</th>
+            <th class="p-3 text-left text-amber-800">Status</th>
           </tr>
         </thead>
         <tbody>
-          {% for b in all_bookings %}
-          <tr class="{% if b.checked_in %}bg-green-50{% else %}bg-yellow-50{% endif %}">
-            <td class="p-3">{{ b.appointment_date }}</td>
+          {% for b in todays_bookings %}
+          <tr class="{% if b.checked_in %}bg-green-50{% else %}bg-yellow-50{% endif %} hover:bg-amber-50 transition">
             <td class="p-3">{{ b.appointment_time }}</td>
             <td class="p-3">{{ b.full_name[-3:] }}***</td>
-            <td class="p-3 font-bold">
+            <td class="p-3 font-bold text-{% if b.checked_in %}green-600{% else %}yellow-600{% endif %}">
               {% if b.checked_in %}Checked In{% else %}Waiting{% endif %}
             </td>
           </tr>
