@@ -173,12 +173,15 @@ async def login(credentials: HTTPBasicCredentials = Depends(security)):
 @app.get("/admin", response_class=HTMLResponse)
 async def admin_dashboard(request: Request, _: bool = Depends(verify_admin), session: Session = Depends(get_session)):
     today = date.today()
-    all_bookings = session.exec(select(Applicant).order_by(Applicant.appointment_date, Applicant.appointment_time)).all()
+    all_bookings = session.exec(
+        select(Applicant).order_by(Applicant.appointment_date, Applicant.appointment_time)
+    ).all()
+
     todays_bookings = [b for b in all_bookings if b.appointment_date == today]
 
     stats = {
-        "total_booked": len(all_bookings),
         "today_booked": len(todays_bookings),
+        "checked_in_today": len([b for b in todays_bookings if b.checked_in]),
         "show_up_rate": round((len([b for b in todays_bookings if b.checked_in]) / len(todays_bookings) * 100) if todays_bookings else 0),
     }
 
@@ -186,7 +189,7 @@ async def admin_dashboard(request: Request, _: bool = Depends(verify_admin), ses
         "request": request,
         "config": config,
         "stats": stats,
-        "all_bookings": all_bookings
+        "todays_bookings": all_bookings  
     })
 
 @app.post("/update-capacity")
