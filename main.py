@@ -166,8 +166,12 @@ async def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
 
 @app.post("/login")
-async def login(credentials: HTTPBasicCredentials = Depends(security)):
-    verify_admin(credentials)
+async def login(
+    username: str = Form(...),
+    password: str = Form(...)
+):
+    if username != ADMIN_USER or password != ADMIN_PASS:
+        raise HTTPException(status_code=401, detail="Unauthorized")
     return RedirectResponse("/admin", status_code=303)
 
 @app.get("/admin", response_class=HTMLResponse)
