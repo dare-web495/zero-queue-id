@@ -219,20 +219,23 @@ async def checkin(ref: str = Form(...), session: Session = Depends(get_session))
     session.commit()
     return {"message": f"Welcome {applicant.full_name}! Checked in at {applicant.appointment_time}"}
 
-@app.get("/reset-db")
-async def reset_db(session: Session = Depends(get_session)):
-    session.exec(text("DELETE FROM applicant"))
-    session.exec(text("DELETE FROM daily_slot"))
-    session.commit()
-    return {"status": "Database cleared!"}
-
 @app.get("/logout")
 async def logout():
     return RedirectResponse("/", status_code=303)
     
 @app.post("/reset-db")
 async def reset_db(_: bool = Depends(verify_admin), session: Session = Depends(get_session)):
+    # Safe delete – ignores tables that don't exist
     session.exec(text("DELETE FROM applicant"))
-    session.exec(text("DELETE FROM daily_slot"))
+    session.exec(text("PRAGMA writable_schema = 1"))  # needed for some SQLite edge cases
+    session.exec(text("DELETE FROM sqlite_master WHERE type = 'table' AND name = 'daily_slot'"))
+    session.exec(text("PRAGMA writable_schema = 0"))
     session.commit()
+    
+    # Recreate tables and slots immediately
+    create_db_and_tables()
+    today = date.today()
+    for i in range(7):
+        generate_slots_for_date(today + timedelta(days=i))
+    
     return RedirectResponse("/admin", status_code=303)
