@@ -5,28 +5,11 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center">
-  <div class="fixed inset-0 -z-10 overflow-hidden">
-    <div class="restaurant-bg"></div>
-  </div>
-  
-  <style>
-    .restaurant-bg {
-      width: 200%;
-      height: 200%;
-      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><circle cx="30" cy="30" r="8" fill="%23f59e0b"/><circle cx="90" cy="80" r="6" fill="%23ef4444"/><circle cx="60" cy="50" r="5" fill="%239ca3af"/></svg>') repeat;
-      opacity: 0.15;
-      animation: float 30s infinite linear;
-    }
-    @keyframes float {
-      0% { transform: translateY(0) translateX(0); }
-      100% { transform: translateY(-50vh) translateX(50px); }
-    }
-  </style>
   <div class="bg-white p-8 rounded-xl shadow-lg w-96">
     <h1 class="text-2xl font-bold mb-6">Admin Login</h1>
-    <form action="/login" method="post">
-      <input type="text" name="username" placeholder="Username" required class="w-full p-3 border rounded mb-4">
-      <input type="password" name="password" placeholder="Password" required class="w-full p-3 border rounded mb-6">
+    <form action="/login" method="post" class="space-y-4">
+      <input type="text" name="username" placeholder="Username" required class="w-full p-3 border rounded">
+      <input type="password" name="password" placeholder="Password" required class="w-full p-3 border rounded">
       <button class="w-full bg-indigo-600 text-white p-3 rounded hover:bg-indigo-700">Login</button>
     </form>
   </div>
