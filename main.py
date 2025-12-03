@@ -224,8 +224,8 @@ async def reset_db(session: Session = Depends(get_session)):
 
 @app.get("/logout")
 async def logout():
-    raise HTTPException(status_code=401, detail="Logged out", headers={"WWW-Authenticate": "Basic"})
-
+    return RedirectResponse("/", status_code=303)
+    
 @app.post("/reset-db")
 async def reset_db(_: bool = Depends(verify_admin), session: Session = Depends(get_session)):
     session.exec(text("DELETE FROM applicant"))
